@@ -11,7 +11,7 @@ const int colorB = 0;
 
 // settings
 char ssid[] = "Galaxy XCover 5230F";  // wifi network
-char pass[] = "placeholder";  // wifi password
+char pass[] = "baah5842";  // wifi password
 const int GMT = 2; //time zone
 const int myClock = 24;  // 4 clock
 const int dateOrder = 1;  // 1 = MDY; 0 = DMY
@@ -56,10 +56,11 @@ void loop() {
 
 void printDate()
 {
-  String lcdDate = String(myday) + "/" + String(mymonth) + "/" + String(myyear);
-  String lcdTime = String(myhours) + ":" + String(mins) + ":" + String(secs);
+  //String lcdDate = String(myday) + "/" + String(mymonth) + "/" + String(myyear);
+  //String lcdTime = String(myhours) + ":" + String(mins) + ":" + String(secs);
   lcd.clear();
-  lcd.print(lcdDate + " " + lcdTime);
+  //lcd.print(lcdDate + " " + lcdTime);
+  lcd.print(getLcdTimeText(myday, mymonth, myhours, mins, secs));
   if (dateOrder == 0) {
     Serial.print(myday);
     Serial.print("/");
@@ -157,3 +158,24 @@ void fixTimeZone() {
     if (myhours == 0) myhours = 12;  // show noon or midnight as 12
   }
 }
+
+// for now without year, because display is not big enough
+String getLcdTimeText(int day, int month, int hour, int min, int second){
+    String dayString = getDoubleDigitString(day);
+    String monthString = getDoubleDigitString(month);
+    //String yearString = getDoubleDigitString(year);
+    String hourString = getDoubleDigitString(hour);
+    String minString = getDoubleDigitString(min);
+    String secString = getDoubleDigitString(second);
+
+    return dayString + "/" + monthString + " " + hourString + ":" + minString + ":" + secString;
+  }
+
+String getDoubleDigitString(int digit){
+    String digitString = String(digit);
+    if (digit < 10){
+        digitString = "0" + digitString;
+      }
+      
+    return digitString;
+  }
