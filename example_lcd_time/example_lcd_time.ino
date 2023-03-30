@@ -9,13 +9,13 @@ const int colorR = 255;
 const int colorG = 0;
 const int colorB = 0;
 
-// USER SETTINGS
-char ssid[] = "Galaxy XCover 5230F";  // Your WiFi network
-char pass[] = "baah5842";  // Your WiFi password
-const int GMT = 2; //change this to adapt it to your time zone
-const int myClock = 12;  // can be 24 or 12 hour clock
-const int dateOrder = 1;  // 1 = MDY; 0 for DMY
-// END USER SETTINGS
+// settings
+char ssid[] = "Galaxy XCover 5230F";  // wifi network
+char pass[] = "placeholder";  // wifi password
+const int GMT = 2; //time zone
+const int myClock = 24;  // 4 clock
+const int dateOrder = 1;  // 1 = MDY; 0 = DMY
+// end settings
 
 RTCZero rtc; // create instance of real time clock
 int status = WL_IDLE_STATUS;
@@ -39,7 +39,6 @@ void setup() {
 
   lcd.clear();
   lcd.setCursor (0,0);
-  lcd.print("test");
 }
 
 void loop() {
