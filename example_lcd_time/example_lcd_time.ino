@@ -1,5 +1,13 @@
 #include <WiFiNINA.h>
 #include <RTCZero.h>
+#include <Wire.h>
+#include "rgb_lcd.h"
+
+// lcd
+rgb_lcd lcd;
+const int colorR = 255;
+const int colorG = 0;
+const int colorB = 0;
 
 // USER SETTINGS
 char ssid[] = "Galaxy XCover 5230F";  // Your WiFi network
@@ -20,14 +28,23 @@ void setup() {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
     status = WiFi.begin(ssid, pass);
+
+    lcd.begin(16, 2);
+    lcd.setRGB(colorR, colorG, colorB);
   }
   delay(6000);
   rtc.begin();
   setRTC();  // get Epoch time from Internet Time Service
   fixTimeZone();
+
+  lcd.clear();
+  lcd.setCursor (0,0);
+  lcd.print("test");
 }
 
 void loop() {
+  //lcd.setCursor(0, 1);
+  
   secs = rtc.getSeconds();
   if (secs == 0) fixTimeZone(); // when secs is 0, update everything and correct for time zone
   // otherwise everything else stays the same.
@@ -40,6 +57,10 @@ void loop() {
 
 void printDate()
 {
+  String lcdDate = String(myday) + "/" + String(mymonth) + "/" + String(myyear);
+  String lcdTime = String(myhours) + ":" + String(mins) + ":" + String(secs);
+  lcd.clear();
+  lcd.print(lcdDate + " " + lcdTime);
   if (dateOrder == 0) {
     Serial.print(myday);
     Serial.print("/");
