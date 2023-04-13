@@ -40,6 +40,10 @@ int status = WL_IDLE_STATUS;
 int myhours, mins, secs, myday, mymonth, myyear;
 bool IsPM = false;
 
+// lcd scrolling
+int scrollCount = 0;
+bool isScrollingLeft = true;
+
 void setup() {
   Serial.begin(115200);
   while ( status != WL_CONNECTED && wifiConnectionTries < wifiConnectionMaxTries) {
@@ -53,9 +57,6 @@ void setup() {
     wifiConnectionTries++;
   }
   delay(6000);
-
-  lcd.clear();
-  lcd.setCursor (0, 0);
 
   if (wifiConnectionTries == wifiConnectionMaxTries) {
     lcd.print("Error");
@@ -71,6 +72,7 @@ void setup() {
   if (!bme.begin()) {
     Serial.println(F("Could not find a valid BME680 sensor, check wiring!"));
     while (1);
+
   }
 
   // Set up oversampling and filter initialization
@@ -81,6 +83,7 @@ void setup() {
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 }
 
+// LOOP
 void loop() {
   if (wifiConnectionTries == wifiConnectionMaxTries) {
     return;
@@ -90,39 +93,52 @@ void loop() {
   if (secs == 0) {
     fixTimeZone(); // when secs is 0, update everything and correct for time zone
     // otherwise everything else stays the same.
+  }
 
-    // measure weather data once a minute
+  if (secs % 20 == 0) {
     getWeatherData();
   }
 
-  // move display by 1 every 3 secs
-  if (secs % 3 == 0){
-    scrollLcd();
-    }
-
   lcd.setCursor(0, 0);
+  //lcd.print("test upper text");
   printDate();
   printTime();
-  //scrollLcd();
-  
-  lcd.setCursor(lcdPositionHorizontal, 1);
+  lcdPrintDateAndTime();
+
+  //lcd.setCursor(lcdPositionHorizontal, 1);
+  lcd.setCursor(0, 1);
+  //lcd.print("test bottom text");
   lcd.print(currentWeatherText);
-  //scrollLcd();
-  
+
   Serial.println();
   while (secs == rtc.getSeconds())delay(10); // wait until seconds change
   if (mins == 59 && secs == 0) setRTC(); // get NTP time every hour at minute 59
+
+  scroll();
 }
 
-void scrollLcd() {
-  lcdPositionHorizontal--;
-  lcdPositionHorizontal = lcdPositionHorizontal < -15 ? 0 : lcdPositionHorizontal;
+void scroll() {
+  if (scrollCount < 10 && isScrollingLeft) {
+    lcd.scrollDisplayLeft();
+    scrollCount++;
+  }
+  else {
+    isScrollingLeft = false;
+    lcd.scrollDisplayRight();
+    scrollCount--;
+  }
+
+  if (scrollCount == 0) {
+    isScrollingLeft = true;
+  }
+}
+
+void lcdPrintDateAndTime() {
+  lcd.print(getLcdTimeText(myday, mymonth, myhours, mins, secs));
 }
 
 void printDate()
 {
-  lcd.clear();
-  lcd.print(getLcdTimeText(myday, mymonth, myhours, mins, secs));
   if (dateOrder == 0) {
     Serial.print(myday);
     Serial.print("/");
