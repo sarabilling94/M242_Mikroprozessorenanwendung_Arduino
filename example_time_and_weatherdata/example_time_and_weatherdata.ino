@@ -81,6 +81,7 @@ void setup() {
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 }
 
+// LOOP
 void loop() {
   if (wifiConnectionTries == wifiConnectionMaxTries) {
     return;
@@ -90,33 +91,22 @@ void loop() {
   if (secs == 0) {
     fixTimeZone(); // when secs is 0, update everything and correct for time zone
     // otherwise everything else stays the same.
-
-    // measure weather data once a minute
-    getWeatherData();
   }
 
-  // move display by 1 every 3 secs
-  if (secs % 3 == 0){
-    scrollLcd();
+  if (secs % 20 == 0){
+      getWeatherData();
     }
 
   lcd.setCursor(0, 0);
   printDate();
   printTime();
-  //scrollLcd();
   
   lcd.setCursor(lcdPositionHorizontal, 1);
   lcd.print(currentWeatherText);
-  //scrollLcd();
   
   Serial.println();
   while (secs == rtc.getSeconds())delay(10); // wait until seconds change
   if (mins == 59 && secs == 0) setRTC(); // get NTP time every hour at minute 59
-}
-
-void scrollLcd() {
-  lcdPositionHorizontal--;
-  lcdPositionHorizontal = lcdPositionHorizontal < -15 ? 0 : lcdPositionHorizontal;
 }
 
 void printDate()
