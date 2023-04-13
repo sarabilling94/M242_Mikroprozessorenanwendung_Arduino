@@ -72,7 +72,6 @@ void setup() {
   if (!bme.begin()) {
     Serial.println(F("Could not find a valid BME680 sensor, check wiring!"));
     while (1);
-
   }
 
   // Set up oversampling and filter initialization
@@ -81,6 +80,8 @@ void setup() {
   bme.setPressureOversampling(BME680_OS_4X);
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
+
+  getWeatherData();
 }
 
 // LOOP
@@ -118,7 +119,7 @@ void loop() {
 }
 
 void scroll() {
-  if (scrollCount < 10 && isScrollingLeft) {
+  if (scrollCount < 24 && isScrollingLeft) {
     lcd.scrollDisplayLeft();
     scrollCount++;
   }
@@ -134,7 +135,8 @@ void scroll() {
 }
 
 void lcdPrintDateAndTime() {
-  lcd.print(getLcdTimeText(myday, mymonth, myhours, mins, secs));
+  String timeText = getLcdTimeText(myyear, myday, mymonth, myhours, mins, secs);
+  lcd.print(timeText + "  " + timeText);
 }
 
 void printDate()
@@ -241,15 +243,15 @@ void fixTimeZone() {
 }
 
 // for now without year, because display is not big enough
-String getLcdTimeText(int day, int month, int hour, int min, int second) {
+String getLcdTimeText(int year, int day, int month, int hour, int min, int second) {
   String dayString = getDoubleDigitString(day);
   String monthString = getDoubleDigitString(month);
-  //String yearString = getDoubleDigitString(year);
+  String yearString = getDoubleDigitString(year);
   String hourString = getDoubleDigitString(hour);
   String minString = getDoubleDigitString(min);
   String secString = getDoubleDigitString(second);
 
-  return dayString + "/" + monthString + " " + hourString + ":" + minString + ":" + secString;
+  return yearString + "/" + dayString + "/" + monthString + " " + hourString + ":" + minString + ":" + secString;
 }
 
 String getDoubleDigitString(int digit) {
@@ -314,5 +316,5 @@ void getWeatherData() {
 }
 
 String getLcdWeatherText() {
-  return String(bme.temperature) + "C/" + String(bme.pressure / 100) + "hPa/" + String(bme.humidity) + "pC";
+  return "Temp.: " + String(bme.temperature) + "C Druck: " + String(bme.pressure / 100) + "hPa Feu.: " + String(bme.humidity) + "%";
 }
