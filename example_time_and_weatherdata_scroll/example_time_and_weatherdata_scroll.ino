@@ -251,7 +251,7 @@ String getLcdTimeText(int year, int day, int month, int hour, int min, int secon
   String minString = getDoubleDigitString(min);
   String secString = getDoubleDigitString(second);
 
-  return yearString + "/" + dayString + "/" + monthString + " " + hourString + ":" + minString + ":" + secString;
+  return  dayString + "/" + monthString + "/" + yearString + " " + hourString + ":" + minString + ":" + secString;
 }
 
 String getDoubleDigitString(int digit) {
