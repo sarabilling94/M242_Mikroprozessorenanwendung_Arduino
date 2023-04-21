@@ -30,6 +30,14 @@ char server[] = "www.sarabilling.bplaced.net";    // name address for Google (us
 // that you want to connect to (port 80 is default for HTTP):
 WiFiSSLClient client;
 
+String bodyJson = "{\"servername\": \"localhost\", \"username\": \"sarabilling\", \"password\": \"m242\", \"database\": \"sarabilling_m242\"}";
+
+// TODO put this in secrets
+String servername = "localhost";
+String username = "sarabilling";
+String password = "m242";
+String database = "sarabilling_m242";
+
 void setup() {
   //Initialize serial and wait for port to open:
   Serial.begin(9600);
@@ -67,7 +75,7 @@ void setup() {
   if (client.connect(server, 443)) {
     Serial.println("connected to server");
     // Make a HTTP request:
-    client.println("GET /connect.php HTTP/1.1");
+    client.println("PUT /connect2.php?servername=localhost&username=sarabilling&password=m242&database=sarabilling_m242 HTTP/1.1");
     client.println("Host: www.sarabilling.bplaced.net");
     client.println("Connection: close");
     client.println();
