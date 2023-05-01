@@ -75,7 +75,11 @@ void setup() {
   if (client.connect(server, 443)) {
     Serial.println("connected to server");
     // Make a HTTP request:
-    client.println("PUT /connect2.php?servername=localhost&username=sarabilling&password=m242&database=sarabilling_m242 HTTP/1.1");
+    float temp = 25.4;
+    float pressure = 1013;
+    float humidity = 50;
+    
+    client.println("PUT /connect.php?servername=localhost&username=sarabilling&password=m242&database=sarabilling_m242&humidity=" + String(humidity) +"&temperature=" + String(temp) + "&pressure=" + String(pressure) + " HTTP/1.1");
     client.println("Host: www.sarabilling.bplaced.net");
     client.println("Connection: close");
     client.println();
