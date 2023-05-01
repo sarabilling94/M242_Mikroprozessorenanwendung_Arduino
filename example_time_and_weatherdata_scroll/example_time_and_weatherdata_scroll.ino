@@ -5,6 +5,8 @@
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BME680.h"
 
+#include "arduino_secrets.h"
+
 // lcd
 rgb_lcd lcd;
 const int colorR = 0;
@@ -23,9 +25,9 @@ String currentWeatherText = "";
 
 Adafruit_BME680 bme; // I2C
 
-// wifi settings
-char ssid[] = "Galaxy XCover 5230F";  // wifi network
-char pass[] = "baah5842";  // wifi password
+// wifi settings, TODO put this in secrets
+char ssid[] = SECRET_SSID;  // wifi network
+char pass[] = SECRET_PASS;  // wifi password
 int wifiConnectionTries = 0;
 int wifiConnectionMaxTries = 4;
 
@@ -39,6 +41,15 @@ RTCZero rtc; // create instance of real time clock
 int status = WL_IDLE_STATUS;
 int myhours, mins, secs, myday, mymonth, myyear;
 bool IsPM = false;
+
+// for HTTP request
+WiFiSSLClient client;
+char server[] = "www.sarabilling.bplaced.net";
+
+String servername = SECRET_SERVERNAME;
+String username = SECRET_USERNAME;
+String password = SECRET_PASSWORD;
+String database = SECRET_DATABASE;
 
 // lcd scrolling
 int scrollCount = 0;
@@ -96,19 +107,16 @@ void loop() {
     // otherwise everything else stays the same.
   }
 
-  if (secs % 20 == 0) {
+  if (secs % 30 == 0) {
     getWeatherData();
   }
 
   lcd.setCursor(0, 0);
-  //lcd.print("test upper text");
   printDate();
   printTime();
   lcdPrintDateAndTime();
 
-  //lcd.setCursor(lcdPositionHorizontal, 1);
   lcd.setCursor(0, 1);
-  //lcd.print("test bottom text");
   lcd.print(currentWeatherText);
 
   Serial.println();
@@ -310,11 +318,30 @@ void getWeatherData() {
   Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
   Serial.println(F(" m"));
 
-  currentWeatherText = getLcdWeatherText();
+  String temp = String(bme.temperature);
+  String pressure = String(bme.pressure / 100);
+  String humidity = String(bme.humidity);
+
+  currentWeatherText = getLcdWeatherText(temp, pressure, humidity);
+  saveWeatherData(temp, pressure, humidity);
 
   Serial.println();
 }
 
-String getLcdWeatherText() {
-  return "Temp.: " + String(bme.temperature) + "C Druck: " + String(bme.pressure / 100) + "hPa Feu.: " + String(bme.humidity) + "%";
+String getLcdWeatherText(String temp, String pressure, String humidity) {
+  return "Temp.: " + temp + "C Druck: " + pressure + "hPa Feu.: " + humidity + "%";
+}
+
+bool saveWeatherData(String temp, String pressure, String humidity) {
+    if (client.connect(server, 443)) {
+    Serial.println("connected to server");
+    // Make a HTTP request:    
+    client.println("PUT /connect.php?servername=localhost&username=sarabilling&password=m242&database=sarabilling_m242&humidity=" + humidity +"&temperature=" + temp + "&pressure=" + pressure + " HTTP/1.1");
+    client.println("Host: www.sarabilling.bplaced.net");
+    client.println("Connection: close");
+    client.println();
+
+    return true;
+  }
+  return false;
 }
