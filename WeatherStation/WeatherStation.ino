@@ -35,6 +35,8 @@ int wifiConnectionMaxTries = 4;
 const int GMT = 2; //time zone
 const int myClock = 24;  // 4 clock
 const int dateOrder = 1;  // 1 = MDY; 0 = DMY
+
+int counter = 0;
 // end settings
 
 RTCZero rtc; // create instance of real time clock
@@ -46,7 +48,6 @@ bool IsPM = false;
 WiFiSSLClient client;
 char server[] = "www.sarabilling.bplaced.net";
 
-// TODO put this in secrets
 String servername = SECRET_SERVERNAME;
 String username = SECRET_USERNAME;
 String password = SECRET_PASSWORD;
@@ -93,7 +94,7 @@ void setup() {
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 
-  getWeatherData();
+  getWeatherData(false);
 }
 
 // LOOP
@@ -108,23 +109,60 @@ void loop() {
     // otherwise everything else stays the same.
   }
 
+  int dataSaved = 0;
   if (secs % 30 == 0) {
-    getWeatherData();
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.setRGB(150, 150, 0);
+    lcd.print("Messung");
+    dataSaved = getWeatherData(true);
+    lcd.clear();
+
+    // set scrolling back
+    scrollCount = 0;
+    isScrollingLeft = true;
   }
 
-  lcd.setCursor(0, 0);
-  printDate();
-  printTime();
-  lcdPrintDateAndTime();
+  if (dataSaved > 0) {
+    counter = 100;
+  }
 
-  lcd.setCursor(0, 1);
-  lcd.print(currentWeatherText);
+  if (dataSaved == 1) {
+    lcd.setRGB(0, 150, 0);
+    lcd.print("Erfolgreich");
+    lcd.setCursor(0, 1);
+    lcd.print("gespeichert");
 
-  Serial.println();
-  while (secs == rtc.getSeconds())delay(10); // wait until seconds change
-  if (mins == 59 && secs == 0) setRTC(); // get NTP time every hour at minute 59
+    delay(1000);
+  }
+  else if (dataSaved == 2) {
+    lcd.setRGB(150, 0, 0);
+    lcd.print("Fehler beim");
+    lcd.setCursor(0, 1);
+    lcd.print("Speichern");
+    delay(1000);
+  }
 
-  scroll();
+
+  if (dataSaved > 0) {
+    lcd.clear();
+  }
+  else {
+    lcd.setRGB(colorR, colorG, colorB);
+    lcd.setCursor(0, 0);
+    printDate();
+    printTime();
+    lcdPrintDateAndTime();
+
+    lcd.setCursor(0, 1);
+    lcd.print(currentWeatherText);
+
+    Serial.println();
+    while (secs == rtc.getSeconds())delay(10); // wait until seconds change
+    if (mins == 59 && secs == 0) setRTC(); // get NTP time every hour at minute 59
+
+    scroll();
+  }
 }
 
 void scroll() {
@@ -272,77 +310,48 @@ String getDoubleDigitString(int digit) {
   return digitString;
 }
 
-void getWeatherData() {
+int getWeatherData(bool save) {
   // Tell BME680 to begin measurement.
   unsigned long endTime = bme.beginReading();
   if (endTime == 0) {
-    Serial.println(F("Failed to begin reading :("));
-    return;
+    return 0;
   }
-  Serial.print(F("Reading started at "));
-  Serial.print(millis());
-  Serial.print(F(" and will finish at "));
-  Serial.println(endTime);
-
-  Serial.println(F("You can do other work during BME680 measurement."));
-  delay(50); // This represents parallel work.
-  // There's no need to delay() until millis() >= endTime: bme.endReading()
-  // takes care of that. It's okay for parallel work to take longer than
-  // BME680's measurement time.
 
   // Obtain measurement results from BME680. Note that this operation isn't
   // instantaneous even if milli() >= endTime due to I2C/SPI latency.
   if (!bme.endReading()) {
-    Serial.println(F("Failed to complete reading :("));
-    return;
+    return 0;
   }
-  Serial.print(F("Reading completed at "));
-  Serial.println(millis());
-
-  Serial.print(F("Temperature = "));
-  Serial.print(bme.temperature);
-  Serial.println(F(" *C"));
-
-  Serial.print(F("Pressure = "));
-  Serial.print(bme.pressure / 100.0);
-  Serial.println(F(" hPa"));
-
-  Serial.print(F("Humidity = "));
-  Serial.print(bme.humidity);
-  Serial.println(F(" %"));
-
-  Serial.print(F("Gas = "));
-  Serial.print(bme.gas_resistance / 1000.0);
-  Serial.println(F(" KOhms"));
-
-  Serial.print(F("Approx. Altitude = "));
-  Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
-  Serial.println(F(" m"));
 
   String temp = String(bme.temperature);
   String pressure = String(bme.pressure / 100);
   String humidity = String(bme.humidity);
 
   currentWeatherText = getLcdWeatherText(temp, pressure, humidity);
-  saveWeatherData(temp, pressure, humidity);
 
-  Serial.println();
+  if (save) {
+    return saveWeatherData(temp, pressure, humidity);
+  }
 }
 
 String getLcdWeatherText(String temp, String pressure, String humidity) {
   return "Temp.: " + temp + "C Druck: " + pressure + "hPa Feu.: " + humidity + "%";
 }
 
-bool saveWeatherData(String temp, String pressure, String humidity) {
-    if (client.connect(server, 443)) {
+// 1 = saved, 2 = error
+int saveWeatherData(String temp, String pressure, String humidity) {
+  lcd.clear();
+  lcd.print("Datenspeicherung");
+
+  if (client.connect(server, 443)) {
     Serial.println("connected to server");
-    // Make a HTTP request:    
-    client.println("PUT /connect.php?servername=localhost&username=sarabilling&password=m242&database=sarabilling_m242&humidity=" + humidity +"&temperature=" + temp + "&pressure=" + pressure + " HTTP/1.1");
+    // Make a HTTP request:
+    client.println("PUT /connect.php?servername=localhost&username=sarabilling&password=m242&database=sarabilling_m242&humidity=" + humidity + "&temperature=" + temp + "&pressure=" + pressure + " HTTP/1.1");
     client.println("Host: www.sarabilling.bplaced.net");
     client.println("Connection: close");
     client.println();
 
-    return true;
+    return 1;
   }
-  return false;
+  return 2;
 }
