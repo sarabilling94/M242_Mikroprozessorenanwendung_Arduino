@@ -182,7 +182,7 @@ void scroll() {
 }
 
 void lcdPrintDateAndTime() {
-  String timeText = getLcdTimeText(myyear, myday, mymonth, myhours, mins, secs);
+  String timeText = getLcdTimeText(myyear, myday, mymonth, myhours, mins, secs, false, false);
   lcd.print(timeText + "  " + timeText);
 }
 
@@ -290,7 +290,7 @@ void fixTimeZone() {
 }
 
 // for now without year, because display is not big enough
-String getLcdTimeText(int year, int day, int month, int hour, int min, int second) {
+String getLcdTimeText(int year, int day, int month, int hour, int min, int second, bool forDb, bool getDate) {
   String dayString = getDoubleDigitString(day);
   String monthString = getDoubleDigitString(month);
   String yearString = getDoubleDigitString(year);
@@ -298,7 +298,14 @@ String getLcdTimeText(int year, int day, int month, int hour, int min, int secon
   String minString = getDoubleDigitString(min);
   String secString = getDoubleDigitString(second);
 
-  return  dayString + "/" + monthString + "/" + yearString + " " + hourString + ":" + minString + ":" + secString;
+  if (!forDb) {
+    return  dayString + "-" + monthString + "-" + yearString + " " + hourString + ":" + minString + ":" + secString;
+  }
+
+  if (getDate) {
+    return  yearString + "-" + monthString + "-" + dayString;
+  }
+  return  hourString + ":" + minString + ":" + secString;
 }
 
 String getDoubleDigitString(int digit) {
@@ -345,8 +352,12 @@ int saveWeatherData(String temp, String pressure, String humidity) {
 
   if (client.connect(server, 443)) {
     Serial.println("connected to server");
+
+    String date = getLcdTimeText(myyear, myday, mymonth, myhours, mins, secs, true, true);
+    String currTime = getLcdTimeText(myyear, myday, mymonth, myhours, mins, secs, true, false);
+
     // Make a HTTP request:
-    client.println("PUT /connect.php?servername=localhost&username=sarabilling&password=m242&database=sarabilling_m242&humidity=" + humidity + "&temperature=" + temp + "&pressure=" + pressure + " HTTP/1.1");
+    client.println("PUT /connect.php?servername=localhost&username=sarabilling&password=m242&database=sarabilling_m242&humidity=" + humidity + "&temperature=" + temp + "&pressure=" + pressure + "&date=" + date + "&time=" + currTime + " HTTP/1.1");
     client.println("Host: www.sarabilling.bplaced.net");
     client.println("Connection: close");
     client.println();

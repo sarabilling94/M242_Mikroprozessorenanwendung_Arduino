@@ -6,6 +6,8 @@ $database = htmlspecialchars($_GET["database"]);
 $temperature = htmlspecialchars($_GET["temperature"]);
 $pressure = htmlspecialchars($_GET["pressure"]);
 $humidity = htmlspecialchars($_GET["humidity"]);
+$date = htmlspecialchars($_GET["date"]);
+$time = htmlspecialchars($_GET["time"]);
 
 // if correct method and db credentials not empty, try to connect
 if ( !empty($servername) && !empty($username) && !empty($password) && !empty($database) && !empty($temperature) && !empty($pressure) && !empty($humidity)){
@@ -17,7 +19,9 @@ if ( !empty($servername) && !empty($username) && !empty($password) && !empty($da
             echo json_encode(array("message" => "Connection to database failed."));
         }
         else {
-            $query = "INSERT INTO tbl_weather (temperature, pressure, humidity) VALUES ('$temperature', '$pressure', '$humidity')";
+            $date .= " ";
+            $date .= $time;
+            $query = "INSERT INTO tbl_weather (temperature, pressure, humidity, dateAndTime) VALUES ('$temperature', '$pressure', '$humidity', '$date')";
             $result = mysqli_query($db, $query);
 
             if ($result) {
