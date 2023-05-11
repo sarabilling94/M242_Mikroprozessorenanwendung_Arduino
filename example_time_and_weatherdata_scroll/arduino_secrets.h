@@ -1,6 +1,0 @@
-#define SECRET_SSID "Galaxy XCover 5230F"
-#define SECRET_PASS "baah5842"
-#define SECRET_SERVERNAME "localhost"
-#define SECRET_USERNAME "sarabilling"
-#define SECRET_PASSWORD "m242"
-#define SECRET_DATABASE "sarabilling_m242"
